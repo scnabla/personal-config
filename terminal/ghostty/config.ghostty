@@ -1,0 +1,55 @@
+# 字体使用 Nerd Font 显示色块箭头与图标
+font-family = JetBrainsMono Nerd Font Mono
+font-size = 14
+
+# 背景不透明度：1 为完全不透明
+background-opacity = 1
+
+# 背景图居中铺满，降低图片不透明度以保持文字清晰
+# 使用背景图时，取消下一行注释并填写本机图片路径。
+# background-image = /path/to/background.jpg
+background-image-position = center
+background-image-fit = cover
+background-image-opacity = 0.15
+
+# 文字与窗口边缘的距离
+window-padding-x = 12
+window-padding-y = 10
+
+# 输入时隐藏鼠标指针
+mouse-hide-while-typing = true
+
+# 主题
+theme = Monokai Classic
+
+# 选中文本时复制到系统剪贴板
+copy-on-select = clipboard
+
+# 鼠标右键粘贴
+right-click-action = paste
+
+# 与 Windows WezTerm 统一的窗格快捷键
+keybind = ctrl+shift+f1=new_split:right
+keybind = ctrl+shift+f2=new_split:down
+keybind = ctrl+shift+f3=close_surface
+
+# 关闭终端窗格时始终确认，包括只有空闲 Shell 的情况
+confirm-close-surface = always
+
+# 与 Windows WezTerm 统一：重新加载配置
+keybind = ctrl+shift+r=reload_config
+
+# 与 Windows WezTerm 统一：按方向切换窗格
+keybind = ctrl+shift+arrow_left=goto_split:left
+keybind = ctrl+shift+arrow_right=goto_split:right
+keybind = ctrl+shift+arrow_up=goto_split:up
+keybind = ctrl+shift+arrow_down=goto_split:down
+
+# 向终端内程序传递鼠标事件，保留 Codex 滚轮操作
+mouse-reporting = true
+
+
+# 窗格放大与全屏，与 Windows WezTerm 统一
+keybind = ctrl+shift+f4=toggle_split_zoom
+keybind = alt+enter=toggle_fullscreen
+# 窗口最大化与还原沿用 GNOME 的 Alt+F10

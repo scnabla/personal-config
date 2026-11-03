@@ -6,8 +6,7 @@ font-size = 14
 background-opacity = 1
 
 # 背景图居中铺满，降低图片不透明度以保持文字清晰
-# 使用背景图时，取消下一行注释并填写本机图片路径。
-# background-image = /path/to/background.jpg
+background-image = imgs/saber.jpg
 background-image-position = center
 background-image-fit = cover
 background-image-opacity = 0.15

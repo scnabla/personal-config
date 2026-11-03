@@ -44,6 +44,12 @@ keybind = ctrl+shift+arrow_right=goto_split:right
 keybind = ctrl+shift+arrow_up=goto_split:up
 keybind = ctrl+shift+arrow_down=goto_split:down
 
+# 与 Windows WezTerm 统一：按方向调整窗格大小
+keybind = ctrl+alt+shift+arrow_left=resize_split:left,10
+keybind = ctrl+alt+shift+arrow_right=resize_split:right,10
+keybind = ctrl+alt+shift+arrow_up=resize_split:up,10
+keybind = ctrl+alt+shift+arrow_down=resize_split:down,10
+
 # 向终端内程序传递鼠标事件，保留 Codex 滚轮操作
 mouse-reporting = true
 

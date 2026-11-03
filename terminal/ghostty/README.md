@@ -18,5 +18,6 @@ bash install.sh
 - 配色为 Monokai Classic，背景图片随目录提供。
 - `Ctrl + Shift + F1/F2` 左右或上下分屏，`Ctrl + Shift + F3` 关闭窗格，`Ctrl + Shift + F4` 放大或恢复窗格。
 - `Ctrl + Shift + 方向键` 切换窗格，`Alt + Enter` 切换全屏。
+- `Ctrl + Alt + Shift + 方向键` 调整窗格大小，每次移动 10 像素。
 
 字体授权见 [fonts/OFL.txt](fonts/OFL.txt)。更新仓库配置时，背景图片保留 `imgs/saber.jpg` 相对路径，不提交安装后生成的个人绝对路径。

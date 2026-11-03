@@ -20,6 +20,7 @@ WezTerm 直接读取配置目录下的字体和背景图片，无需单独安装
 - 配色为 Catppuccin Mocha，背景图片随目录提供。
 - `Ctrl + Shift + F1/F2` 左右或上下分屏，`Ctrl + Shift + F3` 关闭窗格，`Ctrl + Shift + F4` 放大或恢复窗格。
 - `Alt + L` 打开启动菜单，`Alt + Enter` 切换全屏。
+- `Ctrl + Alt + Shift + 方向键` 调整窗格大小，每次移动一个字符单元格。
 - SSH 菜单默认关闭。需要时，在本机 `compat.ssh` 中填写连接信息并将 `enabled.ssh` 设为 `true`。
 
 字体授权见 [fonts/OFL.txt](fonts/OFL.txt)。中文标签栏使用 Windows 系统字体 `Microsoft YaHei UI`。

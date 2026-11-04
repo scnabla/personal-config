@@ -43,18 +43,14 @@ Windows WezTerm 配置
 [07] 键盘快捷键
   ├─ [07.1] 默认快捷键
   ├─ [07.2] 打开启动菜单
-  ├─ [07.3] 窗格快捷键
-  └─ [07.4] 实时配色预览与名称显示
+  └─ [07.3] 窗格快捷键
 [08] 中文命令面板
   ├─ [08.0] 快捷键标注【win】
   ├─ [08.1] 配置与终端
   ├─ [08.2] 编辑与搜索
   ├─ [08.3] 字号与滚动
   ├─ [08.4] 窗口、标签页与分屏
-  ├─ [08.5] 帮助与链接
-  ├─ [08.6] 配色切换菜单
-  ├─ [08.7] 保存默认配色
-  └─ [08.8] 实时预览入口
+  └─ [08.5] 帮助与链接
 [09] 提示与通知
   ├─ [09.1] 终端提示音
   └─ [09.2] 关闭确认
@@ -76,7 +72,6 @@ local enabled = {
   ssh = false,             -- 内置 SSH 菜单入口；关闭不主动断开已有连接，也不禁止在终端手动运行 SSH
   background = true,       -- 背景图片及图片亮度；关闭后使用配色背景
   chinese_commands = true, -- 自定义中文命令面板；内置英文命令不受影响
-  color_preview = true,    -- 实时配色预览；依赖 chinese_commands，关闭时一起停用预览入口、按键和事件
   focus_indicator = true,  -- 分屏明暗、标签高亮与窗口焦点提示
 }
 
@@ -365,141 +360,6 @@ config.keys = {
 -- Ctrl + Shift + F5 正向轮换所有窗格内容，焦点留在屏幕原位置。
 -- Ctrl + Alt + Shift + 方向键调整大小：左右四列，上下两行。
 
--- ----- [07.4] 实时配色预览与名称显示 -----
--- 从命令面板进入后，列表关闭，直接在终端上观察效果。
--- 状态按窗口保存到内存，切换配色引起配置重载时仍可按 Esc 恢复。
-local start_color_preview
-if enabled.color_preview and enabled.chinese_commands then
-local preview_names
-local function get_preview_names()
-  if not preview_names then
-    preview_names = {}
-    for name in pairs(wezterm.color.get_builtin_schemes()) do
-      table.insert(preview_names, name)
-    end
-    table.sort(preview_names)
-  end
-  return preview_names
-end
-
-local function preview_key(win)
-  return 'personal_color_preview_' .. tostring(win:window_id())
-end
-
-local function show_preview_name(win)
-  local state = wezterm.GLOBAL[preview_key(win)]
-  if state then
-    -- 名称放在右侧，窗口较窄时优先保留名称；提示使用固定的高对比颜色。
-    win:set_right_status(wezterm.format {
-      { Foreground = { Color = '#ffffff' } },
-      { Background = { Color = '#202020' } },
-      { Text = ' ←/→ 切换 · Enter 保留 · Esc 恢复 | ' .. state.name .. ' ' },
-    })
-  else
-    win:set_right_status('')
-  end
-end
-
-start_color_preview = function(win, pane)
-  local key = preview_key(win)
-  if not wezterm.GLOBAL[key] then
-    local overrides = win:get_config_overrides() or {}
-    wezterm.GLOBAL[key] = {
-      original = overrides.color_scheme or false,
-      name = win:effective_config().color_scheme or config.color_scheme,
-    }
-  end
-  if win:active_key_table() ~= 'color_preview' then
-    win:perform_action(wezterm.action.ActivateKeyTable {
-      name = 'color_preview', one_shot = false, prevent_fallback = true,
-    }, pane)
-  end
-  show_preview_name(win)
-end
-
-local function step_color_preview(win, direction)
-  local key = preview_key(win)
-  local state = wezterm.GLOBAL[key]
-  if not state then return end
-  local names = get_preview_names()
-  if #names == 0 then return end
-  local current = direction > 0 and 0 or 1
-  for index, name in ipairs(names) do
-    if name == state.name then current = index; break end
-  end
-  state.name = names[(current - 1 + direction) % #names + 1]
-  wezterm.GLOBAL[key] = state
-  local overrides = win:get_config_overrides() or {}
-  overrides.color_scheme = state.name
-  win:set_config_overrides(overrides)
-  show_preview_name(win)
-end
-
-local function finish_color_preview(win, pane, restore)
-  local key = preview_key(win)
-  local state = wezterm.GLOBAL[key]
-  -- 命令面板也会列出这些动作；未进入预览时不影响其他按键模式。
-  if not state then return end
-  wezterm.GLOBAL[key] = false
-  if win:active_key_table() == 'color_preview' then
-    win:perform_action(wezterm.action.PopKeyTable, pane)
-  end
-  if state and restore then
-    local overrides = win:get_config_overrides() or {}
-    overrides.color_scheme = state.original or nil
-    win:set_config_overrides(overrides)
-  end
-  show_preview_name(win)
-end
-
--- 使用固定中文事件名，避免命令面板显示 event-defined-0 等匿名编号。
--- WezTerm 自动生成的条目仍带有 Emit event 前缀。
-wezterm.on('预览：上一个配色（←）', function(win) step_color_preview(win, -1) end)
-wezterm.on('预览：下一个配色（→）', function(win) step_color_preview(win, 1) end)
-wezterm.on('预览：保留配色并退出（Enter）', function(win, pane) finish_color_preview(win, pane, false) end)
-wezterm.on('预览：恢复配色并退出（Esc）', function(win, pane) finish_color_preview(win, pane, true) end)
-
--- 仅在预览期间接管这些按键，退出后恢复原来的快捷键。
-config.key_tables = {
-  color_preview = {
-    { key = 'LeftArrow', mods = 'NONE', action = wezterm.action.EmitEvent '预览：上一个配色（←）' },
-    { key = 'RightArrow', mods = 'NONE', action = wezterm.action.EmitEvent '预览：下一个配色（→）' },
-    { key = 'Enter', mods = 'NONE', action = wezterm.action.EmitEvent '预览：保留配色并退出（Enter）' },
-    { key = 'Escape', mods = 'NONE', action = wezterm.action.EmitEvent '预览：恢复配色并退出（Esc）' },
-  },
-}
-wezterm.on('update-right-status', show_preview_name)
-
--- 切换配色会重载配置并清空临时按键模式；重载结束后恢复尚未退出的预览。
--- 这里只恢复按键和名称，不再次设置配色，避免反复重载。
-wezterm.on('window-config-reloaded', function(win, pane)
-  if wezterm.GLOBAL[preview_key(win)] then
-    local active_pane = pane or win:active_pane()
-    if active_pane then start_color_preview(win, active_pane) end
-  else
-    show_preview_name(win)
-  end
-end)
-
-else
-  -- 热重载关闭预览时，恢复原配色并清除残留状态和临时按键模式。
-  wezterm.on('window-config-reloaded', function(win, pane)
-    local key = 'personal_color_preview_' .. tostring(win:window_id())
-    local state = wezterm.GLOBAL[key]
-    wezterm.GLOBAL[key] = false
-    if win:active_key_table() == 'color_preview' then
-      local active_pane = pane or win:active_pane()
-      if active_pane then win:perform_action(wezterm.action.PopKeyTable, active_pane) end
-    end
-    win:set_right_status('')
-    if state then
-      local overrides = win:get_config_overrides() or {}
-      overrides.color_scheme = state.original or nil
-      win:set_config_overrides(overrides)
-    end
-  end)
-end -- 配色预览开关
-
 -- ========== [08] 中文命令面板 ==========
 -- Ctrl + Shift + P 打开；原有英文命令完整保留，只追加中文入口。
 -- 按已安装的 20240203-110809-5046fc22 版本默认命令表整理。
@@ -616,98 +476,6 @@ wezterm.on('augment-command-palette', function(window, pane)
   add('帮助：打开调试面板', act.ShowDebugOverlay)
   add('链接：打开鼠标位置的链接', act.OpenLinkAtMouseCursor)
 
-  -- ----- [08.6] 配色切换菜单 -----
-  -- 命令面板只展示一个入口；全部内置配色放入独立的可搜索列表。
-  -- 只改变当前窗口，不写入文件；新窗口仍使用配置中的默认配色。
-  add('外观：切换配色', wezterm.action_callback(function(win, active_pane)
-    local names = {}
-    for name in pairs(wezterm.color.get_builtin_schemes()) do
-      table.insert(names, name)
-    end
-    table.sort(names)
-    local choices = {}
-    local current = win:effective_config().color_scheme
-    for _, name in ipairs(names) do
-      table.insert(choices, {
-        id = name,
-        label = name .. (name == current and '（当前）' or ''),
-      })
-    end
-    win:perform_action(act.InputSelector {
-      title = '切换配色（全部内置配色，仅当前窗口）',
-      description = '回车应用，Esc 取消，输入名称搜索',
-      fuzzy_description = '搜索配色：',
-      fuzzy = true,
-      choices = choices,
-      action = wezterm.action_callback(function(target_window, _, id)
-        if not id then return end
-        local overrides = target_window:get_config_overrides() or {}
-        overrides.color_scheme = id
-        target_window:set_config_overrides(overrides)
-      end),
-    }, active_pane)
-  end))
-  -- ----- [08.7] 保存默认配色 -----
-  -- 仅在主动选择此项时保存；只替换当前配置中的配色赋值行。
-  -- 未设置临时配色的窗口会跟随配置重载；其他窗口的试用配色保持不变。
-  add('外观：保存当前配色为默认', wezterm.action_callback(function(win, active_pane)
-    local function report(message)
-      wezterm.log_info(message)
-      win:toast_notification('默认配色', message, nil, 4000)
-    end
-    local scheme = win:effective_config().color_scheme
-    if not scheme or not wezterm.color.get_builtin_schemes()[scheme] then
-      report('未保存：当前配色不是内置配色。')
-      return
-    end
-    local path = wezterm.config_file
-    if not path then
-      report('未保存：无法确定当前配置文件。')
-      return
-    end
-    local file, err = io.open(path, 'rb')
-    if not file then
-      report('未保存：无法读取配置：' .. tostring(err))
-      return
-    end
-    local original = file:read('*a')
-    file:close()
-    if not original then
-      report('未保存：读取配置失败。')
-      return
-    end
-    local updated, count = original:gsub('(\nconfig%.color_scheme%s*=%s*)[^\r\n]+', function(prefix)
-      return prefix .. string.format('%q', scheme)
-    end)
-    if count ~= 1 or not load(updated) then
-      report('未保存：配色赋值行不唯一或配置语法异常，请检查配置。')
-      return
-    end
-    if updated ~= original then
-      file, err = io.open(path, 'wb')
-      if not file then
-        report('未保存：无法写入配置：' .. tostring(err))
-        return
-      end
-      local written, write_err = file:write(updated)
-      local closed, close_err = file:close()
-      if not written or not closed then
-        wezterm.log_error('默认配色保存失败；请检查配置文件，日志不记录配置内容。')
-        report('保存失败，请检查配置文件：' .. tostring(write_err or close_err))
-        return
-      end
-    end
-    -- 保存后移除本窗口的配色覆盖，让它也跟随已保存的默认值。
-    local overrides = win:get_config_overrides() or {}
-    overrides.color_scheme = nil
-    win:set_config_overrides(overrides)
-    win:perform_action(act.ReloadConfiguration, active_pane)
-    report('默认配色已保存为：' .. scheme)
-  end))
-  -- ----- [08.8] 实时预览入口 -----
-  if start_color_preview then
-    add('外观：实时预览配色', wezterm.action_callback(start_color_preview))
-  end
   return entries
 end)
 
@@ -765,7 +533,7 @@ end)
 
 -- ----- [11.3] 独立窗口焦点提示 -----
 -- 焦点事件中读取窗口状态，标题回调只读缓存，避免调用异步接口报错。
--- 标签栏左侧同步提示；不占用右侧配色名称，也不通过修改配置触发重载。
+-- 标签栏左侧同步显示焦点提示。
 local function update_window_focus(win)
   local focused = win:is_focused()
   wezterm.GLOBAL['personal_window_focus_' .. tostring(win:window_id())] = focused

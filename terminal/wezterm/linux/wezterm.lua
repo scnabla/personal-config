@@ -120,6 +120,12 @@ end -- enabled.background
 
 -- ========== [03] 标签栏 ==========
 
+-- 原生 Wayland 窗口保留可拖动的标题栏与缩放边框。
+-- 此组合启用完整窗口装饰；清空标签栏按钮，避免显示两套窗口按钮。
+config.enable_wayland = true
+config.window_decorations = 'TITLE|RESIZE|INTEGRATED_BUTTONS'
+config.integrated_title_buttons = {}
+
 -- ----- [03.1] 显示位置 -----
 -- false 表示标签栏位于顶部。
 config.tab_bar_at_bottom = false

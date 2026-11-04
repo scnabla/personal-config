@@ -1,78 +1,24 @@
 --[[
-个人 WezTerm 配置
-所有设置与执行逻辑集中在本文件；多端路径、程序名、SSH 和 Windows 字体见 [00]。
-配置目录：搜索“[编号] 标题”，跳到下一处匹配即可定位正文。
-【win】表示该项包含 Windows 专属设置、处理逻辑或快捷键说明。
-[开关] 功能开关：集中开启或关闭可选配置
-[00] 多端兼容与工具设置
-  ├─ [00.1] 系统识别【win】
-  ├─ [00.2] 路径【win】
-  ├─ [00.3] 程序名【win】
-  ├─ [00.4] SSH 服务器
-  ├─ [00.5] Windows 标签栏字体【win】
-  └─ [00.6] 文件检查、程序查找与平台选择逻辑【win】
+Linux WezTerm 配置
+[开关] 功能开关
+[00] 本机路径与 SSH 设置
 [01] 启动
-  ├─ [01.0] 系统识别与路径检查【win】
-  ├─ [01.1] 默认终端【win】
-  ├─ [01.2] 启动目录【win】
-  └─ [01.3] 启动菜单
-      ├─ [01.3.1] 本机默认终端【win】
-      └─ [01.3.2] SSH 服务器
-[02] 外观
-  ├─ [02.1] 字体与字号
-  ├─ [02.2] 配色方案
-  ├─ [02.3] 背景
-  │   ├─ [02.3.1] 背景透明度
-  │   ├─ [02.3.2] 背景图片
-  │   └─ [02.3.3] 图片亮度
-  └─ [02.4] 窗口内边距
+[02] 字体、配色与背景
 [03] 标签栏
-  ├─ [03.1] 显示位置
-  ├─ [03.2] 单标签页显示
-  ├─ [03.3] 标签栏样式
-  └─ [03.4] 标签栏中文字体【win】
 [04] 光标
-  └─ [04.1] 形状与闪烁
 [05] 滚动与历史输出
-  ├─ [05.1] 滚动条
-  └─ [05.2] 历史输出行数
 [06] 鼠标操作
-  ├─ [06.1] 选中文本自动复制
-  ├─ [06.2] 右键粘贴
-  └─ [06.3] Ctrl 点击打开链接
-[07] 键盘快捷键
-  ├─ [07.1] 默认快捷键
-  ├─ [07.2] 打开启动菜单
-  ├─ [07.3] 窗格快捷键
-  └─ [07.4] 实时配色预览与名称显示
+[07] 键盘快捷键与配色预览
 [08] 中文命令面板
-  ├─ [08.0] 快捷键标注【win】
-  ├─ [08.1] 配置与终端
-  ├─ [08.2] 编辑与搜索
-  ├─ [08.3] 字号与滚动
-  ├─ [08.4] 窗口、标签页与分屏
-  ├─ [08.5] 帮助与链接
-  ├─ [08.6] 配色切换菜单
-  ├─ [08.7] 保存默认配色
-  └─ [08.8] 实时预览入口
-[09] 提示与通知
-  ├─ [09.1] 终端提示音
-  └─ [09.2] 关闭确认
-[10] 渲染与性能
-  └─ [10.1] 渲染方式
-[11] 当前选中状态
-  ├─ [11.1] 分屏明暗区分
-  ├─ [11.2] 当前标签突出显示
-  └─ [11.3] 独立窗口焦点提示
-
-仅加入已确认的设置，其余保持 WezTerm 默认值。
+[09] 提示与关闭确认
+[10] 渲染
+[11] 当前窗格、标签页与窗口提示
 ]]
 
 -- ========== [开关] 功能开关 ==========
 -- true 开启，false 关闭；SSH 入口默认关闭，填写本机连接信息后再开启。
 -- 修改后重载配置；默认终端、启动目录影响之后新建的会话，不改变已运行的程序。
 local enabled = {
-  windows_settings = true, -- 【win】指定终端、启动目录和标签栏字体；关闭后使用默认终端、用户目录和默认字体
   ssh = false,             -- 内置 SSH 菜单入口；关闭不主动断开已有连接，也不禁止在终端手动运行 SSH
   background = true,       -- 背景图片及图片亮度；关闭后使用配色背景
   chinese_commands = true, -- 自定义中文命令面板；内置英文命令不受影响
@@ -82,61 +28,23 @@ local enabled = {
 
 local wezterm = require 'wezterm'
 local config = wezterm.config_builder()
--- ========== [00] 多端兼容与工具设置 ==========
--- 多端兼容设置：要换电脑、改启动目录、换背景图或 SSH 服务器，先看下面四组设置。
--- 修改值后在 WezTerm 中重新加载配置；这里不会修改系统环境变量。
+-- ========== [00] 本机路径与 SSH 设置 ==========
 local compat = {}
-
--- ----- [00.1] 系统识别 -----
--- 仅识别 Windows；其他平台使用默认终端和字体。
-compat.is_windows = wezterm.target_triple:find('windows', 1, true) ~= nil
-
--- ----- [00.2] 路径 -----
--- 路径：通常只需要修改前两项。
 compat.paths = {
-  -- Windows 启动目录；目录不存在时自动使用用户目录。macOS/Linux 使用用户目录。
-  windows_project = os.getenv('USERPROFILE') or wezterm.home_dir,
-  -- 背景图片相对于 wezterm.lua 所在目录；跨设备同步时把图片一并带上。
   background_image = 'imgs/saber.jpg',
-  -- 下面两项优先读取 Windows 环境变量，后面的路径仅是读取失败时的备用值。
-  windows_system_root = os.getenv('SystemRoot') or 'C:/Windows',
-  windows_program_files = os.getenv('ProgramFiles') or 'C:/Program Files',
 }
-
--- ----- [00.3] 程序名 -----
--- 程序名：只有安装的程序用了不同文件名时才改。
--- 查找顺序是本文件下方列出的常见安装位置，然后是 PATH 中的绝对目录。
--- 不在启动目录或项目文件夹里查找程序。
-compat.programs = {
-  -- Windows 默认终端优先使用 PowerShell 7；找不到时依次使用下面两项。
-  pwsh = 'pwsh.exe',
-  windows_powershell = 'powershell.exe',
-  windows_cmd = 'cmd.exe',
-}
-
--- ----- [00.4] SSH 服务器 -----
--- SSH 启动菜单：将示例 host 和 user 替换为本机连接信息，再开启 enabled.ssh；密码不会写入配置。
+-- 在本机填写连接信息后开启 enabled.ssh；密码不写入配置。
 compat.ssh = {
   host = 'example.com',
   port = '22',
   user = 'your-user',
 }
 
--- ----- [00.5] Windows 标签栏字体 -----
--- 仅 Windows 指定字体；其他平台使用默认字体，不执行外部字体检查。
-compat.windows_tab_font = 'Microsoft YaHei UI'
-
--- ----- [00.6] 文件检查、程序查找与平台选择逻辑 -----
 function compat.file_exists(path)
   local file = io.open(path, 'rb')
   if not file then return false end
   file:close()
   return true
-end
-
-local function directory_exists(path)
-  local ok = pcall(wezterm.read_dir, path)
-  return ok
 end
 
 function compat.warn_once(key, message)
@@ -147,70 +55,11 @@ function compat.warn_once(key, message)
   end
 end
 
--- 以下是查找与回退逻辑；日常改路径、程序名、SSH 或字体只需修改上方四组设置。
-local function find_program(name, candidates)
-  for _, path in ipairs(candidates or {}) do
-    if compat.file_exists(path) then return path end
-  end
-  -- 仅用于 Windows 默认终端；不搜索当前目录或相对 PATH。
-  for directory in (os.getenv('PATH') or ''):gmatch('[^;]+') do
-    directory = directory:gsub('^"', ''):gsub('"$', '')
-    local absolute = directory:match('^%a:[/\\]') or directory:match('^[/\\][/\\]')
-    if absolute then
-      local path = directory .. '/' .. name
-      if compat.file_exists(path) then return path end
-    end
-  end
-end
-
-function compat.default_shell()
-  if not (enabled.windows_settings and compat.is_windows) then return { label = '系统默认终端' } end
-
-  local pwsh = find_program(compat.programs.pwsh, {
-    compat.paths.windows_program_files .. '/PowerShell/7/' .. compat.programs.pwsh,
-  })
-  if pwsh then return { args = { pwsh }, label = 'PowerShell 7' } end
-
-  local powershell = compat.paths.windows_system_root .. '/System32/WindowsPowerShell/v1.0/' .. compat.programs.windows_powershell
-  if compat.file_exists(powershell) then
-    compat.warn_once('pwsh', '未找到 PowerShell 7，使用 Windows PowerShell；未安装或修改任何工具。')
-    return { args = { powershell }, label = 'Windows PowerShell' }
-  end
-
-  compat.warn_once('shell', '未找到 PowerShell，使用系统命令提示符。')
-  return { args = { compat.paths.windows_system_root .. '/System32/' .. compat.programs.windows_cmd }, label = '命令提示符' }
-end
-
-function compat.default_cwd()
-  if not enabled.windows_settings then return wezterm.home_dir end
-  local home = compat.is_windows and (os.getenv('USERPROFILE') or wezterm.home_dir) or wezterm.home_dir
-  if compat.is_windows and directory_exists(compat.paths.windows_project) then
-    return compat.paths.windows_project
-  end
-  return home
-end
-
 -- ========== [01] 启动 ==========
-
--- ----- [01.0] 系统识别与路径检查 -----
--- 路径、程序名及按系统选择的逻辑集中在上方 [00]。
-
--- ----- [01.1] 默认终端 -----
--- Windows 优先 PowerShell 7；其他系统不指定程序，由 WezTerm 使用用户默认 shell。
-local shell = compat.default_shell()
-if shell.args then config.default_prog = shell.args end
-
--- ----- [01.2] 启动目录 -----
--- 本机 Windows 项目路径存在时沿用；其他设备或系统回退到用户目录。
-config.default_cwd = compat.default_cwd()
-
--- ----- [01.3] 启动菜单 -----
+-- 不指定 default_prog，使用当前用户的默认 Shell。
+config.default_cwd = wezterm.home_dir
 config.launch_menu = {
-  -- [01.3.1] 本机默认终端
-  {
-    label = shell.label,
-    args = config.default_prog,
-  },
+  { label = '本机终端' },
 }
 -- [01.3.2] SSH 服务器
 -- 使用 WezTerm 内置 SSH，入口自动出现在 Alt + L 启动菜单中。
@@ -283,13 +132,9 @@ config.hide_tab_bar_if_only_one_tab = false
 -- 保留默认图形样式，不设置 config.use_fancy_tab_bar。
 
 -- ----- [03.4] 标签栏中文字体 -----
--- 仅 Windows 指定中文字体；其他平台保留 WezTerm 默认字体。
--- 仅影响图形标签栏及其状态文字，不改变终端正文字体和字号。
-if enabled.windows_settings and compat.is_windows then
-  config.window_frame = {
-    font = wezterm.font(compat.windows_tab_font),
-  }
-end
+config.window_frame = {
+  font = wezterm.font_with_fallback { 'Noto Sans CJK SC', 'sans-serif' },
+}
 
 -- ========== [04] 光标 ==========
 
@@ -347,6 +192,15 @@ config.mouse_bindings = {
 -- ----- [07.2] 打开启动菜单 -----
 -- Alt + L 打开启动菜单，选择本机默认终端或 SSH 服务器。
 config.keys = {
+  { key = 'r', mods = 'CTRL|SHIFT', action = wezterm.action.ReloadConfiguration },
+  { key = 'LeftArrow', mods = 'CTRL|SHIFT', action = wezterm.action.ActivatePaneDirection 'Left' },
+  { key = 'RightArrow', mods = 'CTRL|SHIFT', action = wezterm.action.ActivatePaneDirection 'Right' },
+  { key = 'UpArrow', mods = 'CTRL|SHIFT', action = wezterm.action.ActivatePaneDirection 'Up' },
+  { key = 'DownArrow', mods = 'CTRL|SHIFT', action = wezterm.action.ActivatePaneDirection 'Down' },
+  { key = 'LeftArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Left', 4 } },
+  { key = 'RightArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Right', 4 } },
+  { key = 'UpArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Up', 2 } },
+  { key = 'DownArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Down', 2 } },
   { key = 'F4', mods = 'CTRL|SHIFT', action = wezterm.action.TogglePaneZoomState },
   { key = 'Enter', mods = 'ALT', action = wezterm.action.ToggleFullScreen },
   { key = 'l', mods = 'ALT', action = wezterm.action.ShowLauncher },
@@ -357,6 +211,7 @@ config.keys = {
 
 -- ----- [07.3] 窗格快捷键 -----
 -- Ctrl + Shift + F1 左右分屏，F2 上下分屏，F3 关闭当前窗格（需确认），F4 放大或恢复当前窗格。
+-- Ctrl + Alt + Shift + 方向键调整大小：左右四列，上下两行。
 
 -- ----- [07.4] 实时配色预览与名称显示 -----
 -- 从命令面板进入后，列表关闭，直接在终端上观察效果。
@@ -495,7 +350,6 @@ end -- 配色预览开关
 
 -- ========== [08] 中文命令面板 ==========
 -- Ctrl + Shift + P 打开；原有英文命令完整保留，只追加中文入口。
--- 按已安装的 20240203-110809-5046fc22 版本默认命令表整理。
 -- 来源：wezterm-gui/src/commands.rs 的 compute_default_actions。
 -- 不执行这些操作，只有在面板中选择并确认后才会执行。
 -- 不翻译程序内部的提示框、搜索框或复制模式专用按键表。
@@ -504,7 +358,7 @@ wezterm.on('augment-command-palette', function(window, pane)
   local act = wezterm.action
   local entries = {}
   -- ----- [08.0] 快捷键标注 -----
-  -- 仅按 Windows 标注默认快捷键及自定义的 Alt + L、Ctrl + Shift + F1/F2/F3，不创建新绑定。
+  -- 标注默认快捷键及本配置的自定义快捷键，不创建新绑定。
   -- 无快捷键的项目显示“未绑定快捷键”，仍可在面板中选择执行。
   -- 这里只列便于使用的一组按键；之后修改绑定时需同步这里的说明。
   local shortcut_labels = {
@@ -595,7 +449,9 @@ wezterm.on('augment-command-palette', function(window, pane)
   for _, direction in ipairs {
     { 'Left', '左', '←' }, { 'Right', '右', '→' }, { 'Up', '上', '↑' }, { 'Down', '下', '↓' },
   } do
-    add('窗格：向' .. direction[2] .. '调整大小一格', act.AdjustPaneSize { direction[1], 1 }, 'Ctrl + Alt + Shift + ' .. direction[3])
+    local horizontal = direction[1] == 'Left' or direction[1] == 'Right'
+    local step = horizontal and 4 or 2
+    add('窗格：向' .. direction[2] .. '调整大小' .. (horizontal and '四列' or '两行'), act.AdjustPaneSize { direction[1], step }, 'Ctrl + Alt + Shift + ' .. direction[3])
     add('窗格：切换到' .. direction[2] .. '方', act.ActivatePaneDirection(direction[1]), 'Ctrl + Shift + ' .. direction[3])
   end
   add('窗格：切换放大或还原', act.TogglePaneZoomState)
@@ -712,7 +568,7 @@ config.audible_bell = 'Disabled'
 -- ----- [09.2] 关闭确认 -----
 -- 通过窗口关闭按钮等方式关闭时询问确认。
 config.window_close_confirmation = 'AlwaysPrompt'
--- 不因当前仅运行 PowerShell 等常见终端而跳过确认。
+-- 当前仅运行 Shell 时也询问确认。
 -- 此列表也影响标签页和窗格的关闭确认。
 config.skip_close_confirmation_for_processes_named = {}
 

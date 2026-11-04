@@ -1,12 +1,11 @@
 # 个人终端配置
 
-Ghostty、Windows WezTerm 和 Linux WezTerm 分别维护完整的配置、字体和背景图片。使用时下载对应目录。
+Ghostty 和 Windows WezTerm 分别维护完整的配置、字体和背景图片。使用时下载对应目录。
 
 | 终端 | 平台 | 独立目录 | 使用方式 |
 | --- | --- | --- | --- |
 | Ghostty | Linux | [ghostty/](ghostty/) | 在目录中运行 `bash install.sh` |
 | WezTerm | Windows | [wezterm/windows/](wezterm/windows/) | 将配置、字体和图片复制到 `%USERPROFILE%\.config\wezterm\` |
-| WezTerm | Linux | [wezterm/linux/](wezterm/linux/) | 将配置、字体和图片复制到 `~/.config/wezterm/` |
 
 先安装对应的终端程序，再放置配置。覆盖已有配置前先备份，文件放好后重新打开终端。具体说明见各目录的 `README.md`。
 

@@ -557,7 +557,7 @@ wezterm.on('format-window-title', function(tab, pane, tabs, panes, effective_con
   if not title or title == '' then title = pane and pane.title or '终端' end
   local zoomed = pane and pane.is_zoomed and ' [窗格已放大]' or ''
   return '[' .. status .. '] [' .. tostring(tab.tab_index + 1) .. '/' .. tostring(#tabs)
-    .. '] ' .. title .. zoomed .. ' — WezTerm'
+    .. '] ' .. title .. zoomed .. ' — ' .. (wezterm.app_name or 'WezTerm')
 end)
 
 else

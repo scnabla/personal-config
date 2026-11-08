@@ -380,15 +380,22 @@ config.mouse_bindings = {
 -- 保留其他 WezTerm 默认快捷键，不设置 config.leader。
 -- 不禁用默认键盘绑定；上方已确认的鼠标绑定保持不变。
 
--- ----- [07.2] 打开启动菜单 -----
+-- ----- [07.2] 自定义快捷键 -----
 -- Alt + L 打开启动菜单，选择本机默认终端、SSH 服务器或 UART 串口。
+config.pane_select_fg_color = '#FFB52E'
+
+local swap_pane_by_number = wezterm.action.PaneSelect {
+  alphabet = '1234567890',
+  mode = 'SwapWithActive',
+}
+
 config.keys = {
   { key = 'LeftArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Left', 4 } },
   { key = 'RightArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Right', 4 } },
   { key = 'UpArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Up', 2 } },
   { key = 'DownArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Down', 2 } },
   { key = 'F4', mods = 'CTRL|SHIFT', action = wezterm.action.TogglePaneZoomState },
-  { key = 'F5', mods = 'CTRL|SHIFT', action = wezterm.action.RotatePanes 'Clockwise' },
+  { key = 'F5', mods = 'NONE', action = swap_pane_by_number },
   { key = 'Enter', mods = 'ALT', action = wezterm.action.ToggleFullScreen },
   { key = 'l', mods = 'ALT', action = wezterm.action.ShowLauncher },
   { key = 'F1', mods = 'CTRL|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
@@ -398,7 +405,7 @@ config.keys = {
 
 -- ----- [07.3] 窗格快捷键 -----
 -- Ctrl + Shift + F1 左右分屏，F2 上下分屏，F3 关闭当前窗格（需确认），F4 放大或恢复当前窗格。
--- Ctrl + Shift + F5 正向轮换所有窗格内容，焦点留在屏幕原位置。
+-- F5 显示数字标记，按对应数字交换窗格，焦点留在屏幕原位置；Esc 取消。
 -- Ctrl + Alt + Shift + 方向键调整大小：左右四列，上下两行。
 
 -- ========== [08] 中文命令面板 ==========
@@ -441,7 +448,6 @@ wezterm.on('augment-command-palette', function(window, pane)
     ['标签页：切换到上一个'] = 'Ctrl + Shift + Tab',
     ['标签页：切换到下一个'] = 'Ctrl + Tab',
     ['窗格：切换放大或还原'] = 'Ctrl + Shift + F4',
-    ['窗格：正向轮换内容'] = 'Ctrl + Shift + F5',
     ['菜单：打开启动菜单'] = 'Alt + L',
     ['帮助：打开调试面板'] = 'Ctrl + Shift + L',
     ['链接：打开鼠标位置的链接'] = 'Ctrl + 左键点击',
@@ -492,7 +498,7 @@ wezterm.on('augment-command-palette', function(window, pane)
   add('窗口：始终置顶', act.SetWindowLevel 'AlwaysOnTop')
   add('窗口：隐藏窗口', act.Hide)
   add('窗格：显示编号并选择窗格', act.PaneSelect { mode = 'Activate' })
-  add('窗格：交换位置但焦点留在原位置', act.PaneSelect { mode = 'SwapWithActive' })
+  add('窗格：按数字交换到当前焦点位置', swap_pane_by_number, 'F5')
   add('窗格：交换位置并跟随当前窗格', act.PaneSelect { mode = 'SwapWithActiveKeepFocus' })
   add('窗格：选择并移到新标签页', act.PaneSelect { mode = 'MoveToNewTab' })
   add('窗格：选择并移到新窗口', act.PaneSelect { mode = 'MoveToNewWindow' })

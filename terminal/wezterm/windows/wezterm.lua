@@ -18,7 +18,8 @@ Windows WezTerm 配置
   └─ [01.3] 启动菜单
       ├─ [01.3.1] 本机默认终端【win】
       ├─ [01.3.2] SSH 服务器
-      └─ [01.3.3] UART 串口【win】
+      ├─ [01.3.3] UART 串口【win】
+      └─ [01.3.4] 串口日志
 [02] 外观
   ├─ [02.1] 字体与字号
   ├─ [02.2] 配色方案
@@ -229,9 +230,13 @@ end -- enabled.ssh
 
 -- [01.3.3] UART 串口
 -- 与 SSH 共用 Alt + L 启动菜单。
+-- 根据日志动作判断功能是否可用，旧版 scnterm 保留原来的串口连接配置。
+local serial_logging_supported = pcall(function()
+  return wezterm.action.StartSerialLogging
+end)
 config.serial_ports = {}
 if compat.is_windows then
-  config.serial_ports = {
+  local serial_ports = {
     {
       name = 'UART: RK3568 (COM3)',
       port = 'COM3',
@@ -240,9 +245,27 @@ if compat.is_windows then
       parity = 'None',
       stop_bits = 1,
       flow_control = 'None',
+      log_on_connect = true, -- 新连接自动记录；设为 false 后通过 Alt + L 手动开始
     },
   }
+  if not serial_logging_supported then
+    for _, serial in ipairs(serial_ports) do serial.log_on_connect = nil end
+  end
+  config.serial_ports = serial_ports
 end
+
+-- [01.3.4] 串口日志
+-- 适用于支持串口日志的 scnterm；所有串口共用以下设置。
+-- 省略 directory 时，直接保存在主 Lua 所在目录；相对路径也以该目录为基准。
+if serial_logging_supported then
+config.serial_logging = {
+  max_file_size_mb = 100, -- 达到 100 MB 后分文件，后续文件依次追加 -1、-2
+  timestamps = true,     -- 每行添加含日期、毫秒和时区的电脑接收时间
+  -- directory = 'serial-logs',
+}
+end
+-- 在串口窗格中按 Alt + L 可手动启停；每次开始均新建文件，停止期间的输出不补录。
+-- 公共设置重载后用于下一次开始记录，已有记录继续使用开始时的设置。
 
 -- ========== [02] 外观 ==========
 

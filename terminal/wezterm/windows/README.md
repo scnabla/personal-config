@@ -33,5 +33,7 @@ WezTerm 直接读取配置目录下的字体和背景图片，无需单独安装
 - `Ctrl + Alt + Shift + 方向键` 调整窗格大小，左右每次移动四列，上下每次移动两行。
 - SSH 菜单默认关闭。需要时，在本机 `compat.ssh` 中填写连接信息并将 `enabled.ssh` 设为 `true`。
 - UART 串口使用 [scnterm 的 Windows UART 版本](https://github.com/scnabla/scnterm/blob/personal/docs/uart-development.md)。参数集中在主配置的 `[01.3.3] UART 串口` 段，默认连接 COM3，波特率 1500000，8N1，无流控。按 `Alt + L` 选择 `UART: RK3568 (COM3)`，在当前窗口新建串口标签页；修改参数后关闭原串口标签页再重新连接。
+- 串口日志需要支持该功能的 scnterm，Windows 本地版本 `20261108-serial-log-local` 已包含该功能。COM3 默认在新连接时自动记录；把该连接的 `log_on_connect` 设为 `false` 可改为手动开始。连接期间通过 `Alt + L` 启停日志。不支持日志的旧版 scnterm 自动跳过日志字段，保留原串口连接配置。
+- `[01.3.4] 串口日志` 中集中设置保存目录、分文件大小和接收时间戳。默认保存到主 Lua 所在目录，包含接收时间，单文件达到 100 MB 后分文件；每次开始新建文件，停止期间的内容不补录，旧日志由用户手动删除。公共设置重载后用于下一次开始记录。
 
 字体授权见 [fonts/OFL.txt](fonts/OFL.txt)。中文标签栏使用 Windows 系统字体 `Microsoft YaHei UI`。

@@ -32,5 +32,6 @@ WezTerm 直接读取配置目录下的字体和背景图片，无需单独安装
 - `Alt + L` 打开启动菜单，`Alt + Enter` 切换全屏。
 - `Ctrl + Alt + Shift + 方向键` 调整窗格大小，左右每次移动四列，上下每次移动两行。
 - SSH 菜单默认关闭。需要时，在本机 `compat.ssh` 中填写连接信息并将 `enabled.ssh` 设为 `true`。
+- UART 串口使用 [scnterm 的 Windows UART 版本](https://github.com/scnabla/scnterm/blob/personal/docs/uart-development.md)。参数集中在主配置的 `[01.3.3] UART 串口` 段，默认连接 COM3，波特率 1500000，8N1，无流控。按 `Alt + L` 选择 `UART: RK3568 (COM3)`，在当前窗口新建串口标签页；修改参数后关闭原串口标签页再重新连接。
 
 字体授权见 [fonts/OFL.txt](fonts/OFL.txt)。中文标签栏使用 Windows 系统字体 `Microsoft YaHei UI`。

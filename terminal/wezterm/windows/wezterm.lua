@@ -17,7 +17,8 @@ Windows WezTerm 配置
   ├─ [01.2] 启动目录【win】
   └─ [01.3] 启动菜单
       ├─ [01.3.1] 本机默认终端【win】
-      └─ [01.3.2] SSH 服务器
+      ├─ [01.3.2] SSH 服务器
+      └─ [01.3.3] UART 串口【win】
 [02] 外观
   ├─ [02.1] 字体与字号
   ├─ [02.2] 配色方案
@@ -226,6 +227,23 @@ config.ssh_domains = {
 
 end -- enabled.ssh
 
+-- [01.3.3] UART 串口
+-- 与 SSH 共用 Alt + L 启动菜单。
+config.serial_ports = {}
+if compat.is_windows then
+  config.serial_ports = {
+    {
+      name = 'UART: RK3568 (COM3)',
+      port = 'COM3',
+      baud = 1500000,
+      data_bits = 8,
+      parity = 'None',
+      stop_bits = 1,
+      flow_control = 'None',
+    },
+  }
+end
+
 -- ========== [02] 外观 ==========
 
 -- ----- [02.1] 字体与字号 -----
@@ -340,7 +358,7 @@ config.mouse_bindings = {
 -- 不禁用默认键盘绑定；上方已确认的鼠标绑定保持不变。
 
 -- ----- [07.2] 打开启动菜单 -----
--- Alt + L 打开启动菜单，选择本机默认终端或 SSH 服务器。
+-- Alt + L 打开启动菜单，选择本机默认终端、SSH 服务器或 UART 串口。
 config.keys = {
   { key = 'LeftArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Left', 4 } },
   { key = 'RightArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Right', 4 } },

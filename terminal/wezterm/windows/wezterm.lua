@@ -312,6 +312,8 @@ config.colors = { split = '#FFB000' }
 -- [02.3.1] 背景透明度
 -- 1.0 表示完全不透明。
 config.window_background_opacity = 1.0
+-- 文字自带的背景色透明，保留彩色文字；对串口、SSH 和本地终端均生效。
+config.text_background_opacity = 0.0
 
 -- [02.3.2] 背景图片
 -- 图片位于本配置文件旁的 imgs 文件夹中。

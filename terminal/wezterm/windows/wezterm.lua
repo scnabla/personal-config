@@ -19,7 +19,8 @@ Windows WezTerm 配置
       ├─ [01.3.1] 本机默认终端【win】
       ├─ [01.3.2] SSH 服务器
       ├─ [01.3.3] UART 串口【win】
-      └─ [01.3.4] 串口日志
+      ├─ [01.3.4] 串口日志
+      └─ [01.3.5] 串口关键词高亮
 [02] 外观
   ├─ [02.1] 字体与字号
   ├─ [02.2] 配色方案
@@ -260,12 +261,38 @@ end
 if serial_logging_supported then
 config.serial_logging = {
   max_file_size_mb = 100, -- 达到 100 MB 后分文件，后续文件依次追加 -1、-2
-  timestamps = true,     -- 每行添加含日期、毫秒和时区的电脑接收时间
+  timestamps = true,     -- 电脑接收时间，例如 [20261108-22:36:11.895]
   -- directory = 'serial-logs',
 }
 end
 -- 在串口窗格中按 Alt + L 可手动启停；每次开始均新建文件，停止期间的输出不补录。
 -- 公共设置重载后用于下一次开始记录，已有记录继续使用开始时的设置。
+
+-- [01.3.5] 串口关键词高亮
+-- 检查字段是否受支持；旧版 ScnTerm 和原版 WezTerm 跳过此段。
+local serial_highlighting_supported = pcall(function()
+  local probe = wezterm.config_builder()
+  probe.serial_highlighting = { rules = {} }
+end)
+if serial_highlighting_supported then
+config.serial_highlighting = {
+  -- 默认不区分大小写；同一位置命中多组时，靠前的组优先。
+  rules = {
+    {
+      foreground = '#FF6B81',
+      keywords = { '错误', '失败', '[故障]' },
+      patterns = { [[\b(?:error|fail(?:ed|ure)?|fatal)\b]] },
+    },
+    {
+      foreground = '#FFB52E',
+      keywords = { '警告', '超时' },
+      patterns = { [[\bwarn(?:ing)?\b]], [[\btime(?:d)?[ -]?out\b]] },
+    },
+  },
+}
+end
+-- 所有串口共用规则，仅匹配文字变色；不改变日志、复制文本及设备原始数据。
+-- 保存后自动重载，当前画面和滚动历史随之更新；清空 rules 后恢复设备原色。
 
 -- ========== [02] 外观 ==========
 

@@ -36,4 +36,16 @@ WezTerm 直接读取配置目录下的字体和背景图片，无需单独安装
 - 串口日志需要支持该功能的 scnterm，Windows 本地版本 `20261108-serial-log-local` 已包含该功能。COM3 默认在新连接时自动记录；把该连接的 `log_on_connect` 设为 `false` 可改为手动开始。连接期间通过 `Alt + L` 启停日志。不支持日志的旧版 scnterm 自动跳过日志字段，保留原串口连接配置。
 - `[01.3.4] 串口日志` 中集中设置保存目录、分文件大小和接收时间戳。默认保存到主 Lua 所在目录，包含接收时间，单文件达到 100 MB 后分文件；每次开始新建文件，停止期间的内容不补录，旧日志由用户手动删除。公共设置重载后用于下一次开始记录。
 
+## 串口关键词高亮
+
+主 Lua 的 `[01.3.5] 串口关键词高亮` 段适用于包含该功能的 ScnTerm，Windows 本地版本 `20261110-serial-highlight-local` 已支持。旧版 ScnTerm 与原版 WezTerm 自动跳过高亮配置。
+
+所有串口共用两组规则：错误、失败、`error`、`failed` 等文字使用玫红色 `#FF6B81`，警告、超时、`warning`、`timed out` 等文字使用橘黄色 `#FFB52E`。只改变匹配文字的颜色，日志、复制出的文本和实际收发内容保持不变，本地终端与 SSH 不应用这些规则。
+
+每组的 `foreground` 设置颜色，`keywords` 添加按原样匹配的关键词，`patterns` 添加正则表达式。同一颜色可以对应多个关键词和表达式，默认不区分大小写；在 `serial_highlighting` 或某组规则中设置 `case_sensitive = true` 可区分大小写。多个规则重叠时，靠前的规则优先。
+
+保存后自动重载，当前画面与滚动历史按新规则显示，无需重连串口。清空 `rules` 可恢复设备原色。配置错误会提示具体位置，并保留上一次成功加载的配置。
+
+完整字段、正则语法与限制见 [ScnTerm 串口关键词高亮说明](https://github.com/scnabla/scnterm/blob/personal/docs/uart-development.md#串口关键词高亮)，可直接复制的通用示例见 [serial-highlighting.lua](https://github.com/scnabla/scnterm/blob/personal/docs/examples/serial-highlighting.lua)。
+
 字体授权见 [fonts/OFL.txt](fonts/OFL.txt)。中文标签栏使用 Windows 系统字体 `Microsoft YaHei UI`。

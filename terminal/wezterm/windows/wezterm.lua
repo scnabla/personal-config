@@ -346,14 +346,32 @@ config.hide_tab_bar_if_only_one_tab = false
 
 -- ----- [03.3] 标签栏样式 -----
 -- 保留默认图形样式，不设置 config.use_fancy_tab_bar。
+-- 标签、新建标签按钮及悬停状态使用亮橘黄色。
+local tab_bar_colors = wezterm.get_builtin_color_schemes()[config.color_scheme].tab_bar
+for _, state in ipairs({ 'active_tab', 'inactive_tab', 'inactive_tab_hover', 'new_tab', 'new_tab_hover' }) do
+  tab_bar_colors[state].fg_color = '#FFB52E'
+end
+tab_bar_colors.background = '#111820'
+-- 未选中标签右侧使用灰蓝分隔线，区分相邻标签。
+tab_bar_colors.inactive_tab_edge = '#53677D'
+tab_bar_colors.active_tab.bg_color = '#155E63'
+tab_bar_colors.inactive_tab.bg_color = '#202B3A'
+tab_bar_colors.inactive_tab_hover.bg_color = '#30465A'
+tab_bar_colors.new_tab.bg_color = '#111820'
+tab_bar_colors.new_tab_hover.bg_color = '#30465A'
+config.colors.tab_bar = tab_bar_colors
+-- 图形标签栏的空白区域由 window_frame 控制。
+config.window_frame = {
+  active_titlebar_bg = '#111820',
+  inactive_titlebar_bg = '#111820',
+}
+
 
 -- ----- [03.4] 标签栏中文字体 -----
 -- 仅 Windows 指定中文字体；其他平台保留 WezTerm 默认字体。
 -- 仅影响图形标签栏及其状态文字，不改变终端正文字体和字号。
 if enabled.windows_settings and compat.is_windows then
-  config.window_frame = {
-    font = wezterm.font(compat.windows_tab_font),
-  }
+  config.window_frame.font = wezterm.font(compat.windows_tab_font)
 end
 
 -- ========== [04] 光标 ==========
@@ -595,11 +613,11 @@ wezterm.on('format-tab-title', function(tab, tabs, panes, effective_config, hove
   local text = prefix .. tostring(tab.tab_index + 1) .. ': ' .. title
   text = wezterm.truncate_right(text, math.max(1, max_width - 2))
   if tab.is_active then
-    -- 只有激活窗口的选中标签使用蓝色；其他窗口的选中标签使用灰色。
+    -- 选中标签使用青绿色，与未选中标签的蓝灰色区分；窗口未激活时略微调暗。
     local focused = wezterm.GLOBAL['personal_window_focus_' .. tostring(tab.window_id)] == true
     return {
-      { Background = { Color = focused and '#89b4fa' or '#45475a' } },
-      { Foreground = { Color = focused and '#11111b' or '#cdd6f4' } },
+      { Background = { Color = focused and '#155E63' or '#244A50' } },
+      { Foreground = { Color = '#FFB52E' } },
       { Attribute = { Intensity = 'Bold' } },
       { Text = ' ' .. text .. ' ' },
     }
@@ -614,8 +632,8 @@ local function update_window_focus(win)
   local focused = win:is_focused()
   wezterm.GLOBAL['personal_window_focus_' .. tostring(win:window_id())] = focused
   win:set_left_status(wezterm.format {
-    { Foreground = { Color = focused and '#a6e3a1' or '#a6adc8' } },
-    { Background = { Color = '#1e1e2e' } },
+    { Foreground = { Color = '#FFB52E' } },
+    { Background = { Color = '#111820' } },
     { Text = focused and ' 当前窗口 ' or ' 未激活 ' },
   })
 end

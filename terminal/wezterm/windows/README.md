@@ -49,3 +49,18 @@ WezTerm 直接读取配置目录下的字体和背景图片，无需单独安装
 完整字段、正则语法与限制见 [ScnTerm 串口关键词高亮说明](https://github.com/scnabla/scnterm/blob/personal/docs/uart-development.md#串口关键词高亮)，可直接复制的通用示例见 [serial-highlighting.lua](https://github.com/scnabla/scnterm/blob/personal/docs/examples/serial-highlighting.lua)。
 
 字体授权见 [fonts/OFL.txt](fonts/OFL.txt)。中文标签栏使用 Windows 系统字体 `Microsoft YaHei UI`。
+
+## SSH 常用目录
+
+包含 `ShowDirectoryMenu` 功能的 ScnTerm 使用 `Alt+P` 打开常用目录菜单。旧版本会跳过此快捷键。
+
+在通过 `Alt+L` 建立的内置 SSH 会话中，回到空白命令提示符后使用：
+
+- `↑`、`↓` 选择，回车进入对应目录。
+- 选中“添加当前目录”后回车，读取并保存当前 Shell 的目录。
+- `-` 删除选中的目录记录，不删除服务器上的目录。
+- `Esc` 关闭菜单。
+
+菜单只显示当前 SSH 连接的记录，同一连接的标签页和分屏共用列表。添加目录时会执行一次读取 `$PWD` 的命令，远端需有兼容 POSIX 的 Shell 及 `printf`、`base64`、`tr`。已有半行输入或前台程序正在运行时，应先回到空白命令提示符。
+
+目录记录默认保存在主 Lua 同目录的 `scnterm-directory-bookmarks.json`，重启后保留。可在主 Lua 设置 `config.directory_bookmarks_file` 指定完整文件路径，相对路径以主 Lua 所在目录为基准；保存配置后重新打开菜单生效。修改位置不自动迁移旧记录，早期版本的文件位于 `%APPDATA%\wezterm\scnterm-directory-bookmarks.json`，可复制到新位置或继续配置为旧路径。该文件包含服务器标识和个人路径，不纳入配置仓库。详细说明见 [ScnTerm SSH 常用目录](https://github.com/scnabla/scnterm/blob/personal/docs/directory-menu.md)。

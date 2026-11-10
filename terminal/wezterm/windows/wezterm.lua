@@ -436,6 +436,14 @@ local swap_pane_by_number = wezterm.action.PaneSelect {
   mode = 'SwapWithActive',
 }
 
+-- 目录记录默认与主 Lua 同目录；取消注释可指定其他文件，相对路径以主 Lua 为基准。
+-- config.directory_bookmarks_file = 'scnterm-directory-bookmarks.json'
+
+-- 新版 ScnTerm 提供按 SSH 连接保存的目录菜单，旧版本跳过此快捷键。
+local directory_menu_supported, directory_menu_action = pcall(function()
+  return wezterm.action.ShowDirectoryMenu
+end)
+
 config.keys = {
   { key = 'LeftArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Left', 4 } },
   { key = 'RightArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Right', 4 } },
@@ -449,6 +457,11 @@ config.keys = {
   { key = 'F2', mods = 'CTRL|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
   { key = 'F3', mods = 'CTRL|SHIFT', action = wezterm.action.CloseCurrentPane { confirm = true } },
 }
+
+-- Alt + P 打开当前 SSH 连接的常用目录，上下选择、回车进入或添加，- 删除记录。
+if directory_menu_supported then
+  table.insert(config.keys, { key = 'p', mods = 'ALT', action = directory_menu_action })
+end
 
 -- ----- [07.3] 窗格快捷键 -----
 -- Ctrl + Shift + F1 左右分屏，F2 上下分屏，F3 关闭当前窗格（需确认），F4 放大或恢复当前窗格。
@@ -513,6 +526,9 @@ wezterm.on('augment-command-palette', function(window, pane)
   add('终端：关闭当前标签页（需确认）', act.CloseCurrentTab { confirm = true })
   add('终端：关闭当前窗格（需确认）', act.CloseCurrentPane { confirm = true })
   add('终端：重置当前终端状态', act.ResetTerminal)
+  if directory_menu_supported then
+    add('SSH：常用目录', directory_menu_action, 'Alt+P')
+  end
 
   -- ----- [08.2] 编辑与搜索 -----
   add('编辑：复制到系统剪贴板', act.CopyTo 'Clipboard')

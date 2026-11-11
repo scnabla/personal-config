@@ -1,6 +1,6 @@
 --[[
 Windows WezTerm 配置
-所有设置与执行逻辑集中在本文件；多端路径、程序名、SSH 和 Windows 字体见 [00]。
+通用设置在本文件；同目录 ssh.lua 管理 SSH，serial.lua 管理串口，keys.lua 管理键盘快捷键。
 配置目录：搜索“[编号] 标题”，跳到下一处匹配即可定位正文。
 【win】表示该项包含 Windows 专属设置、处理逻辑或快捷键说明。
 [开关] 功能开关：集中开启或关闭可选配置
@@ -8,7 +8,7 @@ Windows WezTerm 配置
   ├─ [00.1] 系统识别【win】
   ├─ [00.2] 路径【win】
   ├─ [00.3] 程序名【win】
-  ├─ [00.4] SSH 服务器
+  ├─ [00.4] SSH 服务器 → ssh.lua
   ├─ [00.5] Windows 标签栏字体【win】
   └─ [00.6] 文件检查、程序查找与平台选择逻辑【win】
 [01] 启动
@@ -17,10 +17,10 @@ Windows WezTerm 配置
   ├─ [01.2] 启动目录【win】
   └─ [01.3] 启动菜单
       ├─ [01.3.1] 本机默认终端【win】
-      ├─ [01.3.2] SSH 服务器
-      ├─ [01.3.3] UART 串口【win】
-      ├─ [01.3.4] 串口日志
-      └─ [01.3.5] 串口关键词高亮
+      ├─ [01.3.2] SSH 服务器 → ssh.lua
+      ├─ [01.3.3] UART 串口【win】 → serial.lua
+      ├─ [01.3.4] 串口日志 → serial.lua
+      └─ [01.3.5] 串口关键词高亮 → serial.lua
 [02] 外观
   ├─ [02.1] 字体与字号
   ├─ [02.2] 配色方案
@@ -43,12 +43,12 @@ Windows WezTerm 配置
   ├─ [06.1] 选中文本自动复制
   ├─ [06.2] 右键粘贴
   └─ [06.3] Ctrl 点击打开链接
-[07] 键盘快捷键
-  ├─ [07.1] 默认快捷键
-  ├─ [07.2] 打开启动菜单
-  └─ [07.3] 窗格快捷键
+[07] 键盘快捷键 → keys.lua
+  ├─ [07.1] 默认快捷键 → keys.lua
+  ├─ [07.2] 自定义快捷键 → keys.lua
+  └─ [07.3] 窗格快捷键 → keys.lua
 [08] 中文命令面板
-  ├─ [08.0] 快捷键标注【win】
+  ├─ [08.0] 快捷键标注【win】 → keys.lua
   ├─ [08.1] 配置与终端
   ├─ [08.2] 编辑与搜索
   ├─ [08.3] 字号与滚动
@@ -68,11 +68,10 @@ Windows WezTerm 配置
 ]]
 
 -- ========== [开关] 功能开关 ==========
--- true 开启，false 关闭；SSH 入口默认关闭，填写本机连接信息后再开启。
+-- true 开启，false 关闭；SSH 开关单独放在 ssh.lua 的 [开关]。
 -- 修改后重载配置；默认终端、启动目录影响之后新建的会话，不改变已运行的程序。
 local enabled = {
   windows_settings = true, -- 【win】指定终端、启动目录和标签栏字体；关闭后使用默认终端、用户目录和默认字体
-  ssh = false,             -- 内置 SSH 菜单入口；关闭不主动断开已有连接，也不禁止在终端手动运行 SSH
   background = true,       -- 背景图片及图片亮度；关闭后使用配色背景
   chinese_commands = true, -- 自定义中文命令面板；内置英文命令不受影响
   focus_indicator = true,  -- 分屏明暗、标签高亮与窗口焦点提示
@@ -80,8 +79,11 @@ local enabled = {
 
 local wezterm = require 'wezterm'
 local config = wezterm.config_builder()
+-- 从实际主 Lua 所在目录加载模块，也适用于 --config-file 指定的配置。
+-- require 会将 ssh.lua、serial.lua、keys.lua 加入配置监听，保存任一文件后自动重载。
+package.path = wezterm.config_dir .. '/?.lua;' .. package.path
 -- ========== [00] 多端兼容与工具设置 ==========
--- 多端兼容设置：要换电脑、改启动目录、换背景图或 SSH 服务器，先看下面四组设置。
+-- 多端兼容设置：启动目录、背景图、程序名和字体在下方设置；SSH 服务器见 ssh.lua。
 -- 修改值后在 WezTerm 中重新加载配置；这里不会修改系统环境变量。
 local compat = {}
 
@@ -113,12 +115,8 @@ compat.programs = {
 }
 
 -- ----- [00.4] SSH 服务器 -----
--- SSH 启动菜单：将示例 host 和 user 替换为本机连接信息，再开启 enabled.ssh；密码不会写入配置。
-compat.ssh = {
-  host = 'example.com',
-  port = '22',
-  user = 'your-user',
-}
+-- 配置位于同目录 ssh.lua 的 [开关] 和 [00.4]；连接加载见 [01.3.2]。
+-- 修改服务器、用户名、端口或 SSH 开关时编辑 ssh.lua。
 
 -- ----- [00.5] Windows 标签栏字体 -----
 -- 仅 Windows 指定字体；其他平台使用默认字体，不执行外部字体检查。
@@ -145,7 +143,7 @@ function compat.warn_once(key, message)
   end
 end
 
--- 以下是查找与回退逻辑；日常改路径、程序名、SSH 或字体只需修改上方四组设置。
+-- 以下是查找与回退逻辑；路径、程序名和字体在上方对应小节设置。
 local function find_program(name, candidates)
   for _, path in ipairs(candidates or {}) do
     if compat.file_exists(path) then return path end
@@ -211,88 +209,22 @@ config.launch_menu = {
   },
 }
 -- [01.3.2] SSH 服务器
--- 使用 WezTerm 内置 SSH，入口自动出现在 Alt + L 启动菜单中。
--- 仅选择入口后连接；首次连接需核对指纹，密码不写入配置。
--- None 表示普通 SSH，服务器无需安装 WezTerm；断网不保留会话。
--- 显式空列表避免关闭后自动从系统 SSH 配置生成入口。
-config.ssh_domains = {}
-if enabled.ssh then
-config.ssh_domains = {
-  {
-    name = 'SSH: ' .. compat.ssh.user .. '@' .. compat.ssh.host .. ':' .. compat.ssh.port,
-    remote_address = compat.ssh.host .. ':' .. compat.ssh.port,
-    username = compat.ssh.user,
-    multiplexing = 'None',
-    connect_automatically = false,
-  },
-}
-
-end -- enabled.ssh
+-- 连接开关、服务器和目录记录路径在同目录 ssh.lua 中设置。
+-- 此处加载连接配置；Alt + L 入口沿用内置 SSH，Alt + P 接入见 [07.2]。
+local ssh = require 'ssh'
+ssh.apply(config)
 
 -- [01.3.3] UART 串口
--- 与 SSH 共用 Alt + L 启动菜单。
--- 根据日志动作判断功能是否可用，旧版 scnterm 保留原来的串口连接配置。
-local serial_logging_supported = pcall(function()
-  return wezterm.action.StartSerialLogging
-end)
-config.serial_ports = {}
-if compat.is_windows then
-  local serial_ports = {
-    {
-      name = 'UART: RK3568 (COM3)',
-      port = 'COM3',
-      baud = 1500000,
-      data_bits = 8,
-      parity = 'None',
-      stop_bits = 1,
-      flow_control = 'None',
-      log_on_connect = true, -- 新连接自动记录；设为 false 后通过 Alt + L 手动开始
-    },
-  }
-  if not serial_logging_supported then
-    for _, serial in ipairs(serial_ports) do serial.log_on_connect = nil end
-  end
-  config.serial_ports = serial_ports
-end
+-- 同目录 serial.lua 的 [01.3.3] 设置串口名称、端口、波特率等参数。
+-- 此处一并加载串口连接、日志和高亮配置；Alt + L 选择连接。
+require('serial').apply(config)
 
 -- [01.3.4] 串口日志
--- 适用于支持串口日志的 scnterm；所有串口共用以下设置。
--- 省略 directory 时，直接保存在主 Lua 所在目录；相对路径也以该目录为基准。
-if serial_logging_supported then
-config.serial_logging = {
-  max_file_size_mb = 100, -- 达到 100 MB 后分文件，后续文件依次追加 -1、-2
-  timestamps = true,     -- 电脑接收时间，例如 [20261108-22:36:11.895]
-  -- directory = 'serial-logs',
-}
-end
--- 在串口窗格中按 Alt + L 可手动启停；每次开始均新建文件，停止期间的输出不补录。
--- 公共设置重载后用于下一次开始记录，已有记录继续使用开始时的设置。
+-- 设置位于 serial.lua 的 [01.3.3] log_on_connect 和 [01.3.4] serial_logging。
+-- 日志目录默认与主 Lua 相同，相对路径也以主 Lua 所在目录为基准。
 
 -- [01.3.5] 串口关键词高亮
--- 检查字段是否受支持；旧版 ScnTerm 和原版 WezTerm 跳过此段。
-local serial_highlighting_supported = pcall(function()
-  local probe = wezterm.config_builder()
-  probe.serial_highlighting = { rules = {} }
-end)
-if serial_highlighting_supported then
-config.serial_highlighting = {
-  -- 默认不区分大小写；同一位置命中多组时，靠前的组优先。
-  rules = {
-    {
-      foreground = '#FF6B81',
-      keywords = { '错误', '失败', '[故障]' },
-      patterns = { [[\b(?:error|fail(?:ed|ure)?|fatal)\b]] },
-    },
-    {
-      foreground = '#FFB52E',
-      keywords = { '警告', '超时' },
-      patterns = { [[\bwarn(?:ing)?\b]], [[\btime(?:d)?[ -]?out\b]] },
-    },
-  },
-}
-end
--- 所有串口共用规则，仅匹配文字变色；不改变日志、复制文本及设备原始数据。
--- 保存后自动重载，当前画面和滚动历史随之更新；清空 rules 后恢复设备原色。
+-- 规则与颜色在 serial.lua 的 [01.3.5] 中维护；由上方统一加载。
 
 -- ========== [02] 外观 ==========
 
@@ -422,51 +354,18 @@ config.mouse_bindings = {
 }
 
 -- ========== [07] 键盘快捷键 ==========
+-- 自定义绑定、窗格数字选择和命令面板的快捷键标注统一在同目录 keys.lua 中维护。
 
 -- ----- [07.1] 默认快捷键 -----
--- 保留其他 WezTerm 默认快捷键，不设置 config.leader。
--- 不禁用默认键盘绑定；上方已确认的鼠标绑定保持不变。
+-- keys.lua 的 [07.1] 说明默认按键的保留方式；鼠标操作见本文件 [06]。
 
 -- ----- [07.2] 自定义快捷键 -----
--- Alt + L 打开启动菜单，选择本机默认终端、SSH 服务器或 UART 串口。
-config.pane_select_fg_color = '#FFB52E'
-
-local swap_pane_by_number = wezterm.action.PaneSelect {
-  alphabet = '1234567890',
-  mode = 'SwapWithActive',
-}
-
--- 目录记录默认与主 Lua 同目录；取消注释可指定其他文件，相对路径以主 Lua 为基准。
--- config.directory_bookmarks_file = 'scnterm-directory-bookmarks.json'
-
--- 新版 ScnTerm 提供按 SSH 连接保存的目录菜单，旧版本跳过此快捷键。
-local directory_menu_supported, directory_menu_action = pcall(function()
-  return wezterm.action.ShowDirectoryMenu
-end)
-
-config.keys = {
-  { key = 'LeftArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Left', 4 } },
-  { key = 'RightArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Right', 4 } },
-  { key = 'UpArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Up', 2 } },
-  { key = 'DownArrow', mods = 'CTRL|ALT|SHIFT', action = wezterm.action.AdjustPaneSize { 'Down', 2 } },
-  { key = 'F4', mods = 'CTRL|SHIFT', action = wezterm.action.TogglePaneZoomState },
-  { key = 'F5', mods = 'NONE', action = swap_pane_by_number },
-  { key = 'Enter', mods = 'ALT', action = wezterm.action.ToggleFullScreen },
-  { key = 'l', mods = 'ALT', action = wezterm.action.ShowLauncher },
-  { key = 'F1', mods = 'CTRL|SHIFT', action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' } },
-  { key = 'F2', mods = 'CTRL|SHIFT', action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' } },
-  { key = 'F3', mods = 'CTRL|SHIFT', action = wezterm.action.CloseCurrentPane { confirm = true } },
-}
-
--- Alt + P 打开当前 SSH 连接的常用目录，上下选择、回车进入或添加，- 删除记录。
-if directory_menu_supported then
-  table.insert(config.keys, { key = 'p', mods = 'ALT', action = directory_menu_action })
-end
+-- keys.lua 的 [07.2] 设置 F5、Alt + L、Alt + P、分屏及调整窗格大小等绑定。
+local keys = require 'keys'
+keys.apply(config)
 
 -- ----- [07.3] 窗格快捷键 -----
--- Ctrl + Shift + F1 左右分屏，F2 上下分屏，F3 关闭当前窗格（需确认），F4 放大或恢复当前窗格。
--- F5 显示数字标记，按对应数字交换窗格，焦点留在屏幕原位置；Esc 取消。
--- Ctrl + Alt + Shift + 方向键调整大小：左右四列，上下两行。
+-- 操作说明见 keys.lua 的 [07.3]，在上方统一加载。
 
 -- ========== [08] 中文命令面板 ==========
 -- Ctrl + Shift + P 打开；原有英文命令完整保留，只追加中文入口。
@@ -479,41 +378,9 @@ wezterm.on('augment-command-palette', function(window, pane)
   local act = wezterm.action
   local entries = {}
   -- ----- [08.0] 快捷键标注 -----
-  -- 仅按 Windows 标注默认快捷键及自定义的 Alt + L、Ctrl + Shift + F1/F2/F3，不创建新绑定。
-  -- 无快捷键的项目显示“未绑定快捷键”，仍可在面板中选择执行。
-  -- 这里只列便于使用的一组按键；之后修改绑定时需同步这里的说明。
-  local shortcut_labels = {
-    ['配置：重新加载配置'] = 'Ctrl + Shift + R',
-    ['终端：新建标签页'] = 'Ctrl + Shift + T',
-    ['终端：新建窗口'] = 'Ctrl + Shift + N',
-    ['终端：上下分屏'] = 'Ctrl + Shift + F2',
-    ['终端：左右分屏'] = 'Ctrl + Shift + F1',
-    ['终端：关闭当前标签页（需确认）'] = 'Ctrl + Shift + W',
-    ['终端：关闭当前窗格（需确认）'] = 'Ctrl + Shift + F3',
-    ['编辑：复制到系统剪贴板'] = 'Ctrl + Shift + C',
-    ['编辑：从系统剪贴板粘贴'] = 'Ctrl + Shift + V；右键',
-    ['编辑：清除历史输出，保留当前屏幕'] = 'Ctrl + Shift + K',
-    ['编辑：快速选择文本'] = 'Ctrl + Shift + Space',
-    ['编辑：选择字符或表情'] = 'Ctrl + Shift + U',
-    ['编辑：进入键盘复制模式'] = 'Ctrl + Shift + X',
-    ['编辑：打开命令面板'] = 'Ctrl + Shift + P',
-    ['搜索：搜索选中文本或输入关键词'] = 'Ctrl + Shift + F',
-    ['字号：缩小'] = 'Ctrl + -',
-    ['字号：放大'] = 'Ctrl + =',
-    ['字号：恢复配置字号'] = 'Ctrl + 0',
-    ['滚动：向上翻一页'] = 'Shift + PageUp',
-    ['滚动：向下翻一页'] = 'Shift + PageDown',
-    ['窗口：切换全屏'] = 'Alt + Enter',
-    ['窗口：隐藏窗口'] = 'Ctrl + Shift + M',
-    ['标签页：切换到上一个'] = 'Ctrl + Shift + Tab',
-    ['标签页：切换到下一个'] = 'Ctrl + Tab',
-    ['窗格：切换放大或还原'] = 'Ctrl + Shift + F4',
-    ['菜单：打开启动菜单'] = 'Alt + L',
-    ['帮助：打开调试面板'] = 'Ctrl + Shift + L',
-    ['链接：打开鼠标位置的链接'] = 'Ctrl + 左键点击',
-  }
-  local function add(label, action, shortcut)
-    local hint = shortcut or shortcut_labels[label] or '未绑定快捷键'
+  -- 标注文字在 keys.lua 的 [08.0] 维护；此处只组合命令名称和对应标注。
+  local function add(label, action)
+    local hint = keys.shortcut_labels[label] or '未绑定快捷键'
     table.insert(entries, { brief = label .. '  [' .. hint .. ']', action = action })
   end
 
@@ -526,8 +393,9 @@ wezterm.on('augment-command-palette', function(window, pane)
   add('终端：关闭当前标签页（需确认）', act.CloseCurrentTab { confirm = true })
   add('终端：关闭当前窗格（需确认）', act.CloseCurrentPane { confirm = true })
   add('终端：重置当前终端状态', act.ResetTerminal)
-  if directory_menu_supported then
-    add('SSH：常用目录', directory_menu_action, 'Alt+P')
+  -- 目录菜单动作及兼容检查由 keys.lua 提供。
+  if keys.directory_menu_action then
+    add('SSH：常用目录', keys.directory_menu_action)
   end
 
   -- ----- [08.2] 编辑与搜索 -----
@@ -561,7 +429,7 @@ wezterm.on('augment-command-palette', function(window, pane)
   add('窗口：始终置顶', act.SetWindowLevel 'AlwaysOnTop')
   add('窗口：隐藏窗口', act.Hide)
   add('窗格：显示编号并选择窗格', act.PaneSelect { mode = 'Activate' })
-  add('窗格：按数字交换到当前焦点位置', swap_pane_by_number, 'F5')
+  add('窗格：按数字交换到当前焦点位置', keys.swap_pane_by_number)
   add('窗格：交换位置并跟随当前窗格', act.PaneSelect { mode = 'SwapWithActiveKeepFocus' })
   add('窗格：选择并移到新标签页', act.PaneSelect { mode = 'MoveToNewTab' })
   add('窗格：选择并移到新窗口', act.PaneSelect { mode = 'MoveToNewWindow' })
@@ -571,12 +439,12 @@ wezterm.on('augment-command-palette', function(window, pane)
   add('窗口：切换到上一个', act.ActivateWindowRelative(-1))
   add('窗口：切换到下一个', act.ActivateWindowRelative(1))
   for _, direction in ipairs {
-    { 'Left', '左', '←' }, { 'Right', '右', '→' }, { 'Up', '上', '↑' }, { 'Down', '下', '↓' },
+    { 'Left', '左' }, { 'Right', '右' }, { 'Up', '上' }, { 'Down', '下' },
   } do
     local horizontal = direction[1] == 'Left' or direction[1] == 'Right'
     local step = horizontal and 4 or 2
-    add('窗格：向' .. direction[2] .. '调整大小' .. (horizontal and '四列' or '两行'), act.AdjustPaneSize { direction[1], step }, 'Ctrl + Alt + Shift + ' .. direction[3])
-    add('窗格：切换到' .. direction[2] .. '方', act.ActivatePaneDirection(direction[1]), 'Ctrl + Shift + ' .. direction[3])
+    add('窗格：向' .. direction[2] .. '调整大小' .. (horizontal and '四列' or '两行'), act.AdjustPaneSize { direction[1], step })
+    add('窗格：切换到' .. direction[2] .. '方', act.ActivatePaneDirection(direction[1]))
   end
   add('窗格：切换放大或还原', act.TogglePaneZoomState)
   add('菜单：打开启动菜单', act.ShowLauncher)

@@ -1,0 +1,71 @@
+name: ScnTerm 配置程序 Windows 构建与发布
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/scnterm-config/**'
+      - '!tools/scnterm-config/docs/**'
+      - '!tools/scnterm-config/**/*.md'
+      - '.github/workflows/scnterm-config.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: scnterm-config-windows-release
+  cancel-in-progress: false
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: tools/scnterm-config
+    permissions:
+      contents: write
+    env:
+      SCNTERM_BUILD_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: 构建与文件保护测试
+        shell: pwsh
+        run: ./scripts/build-windows.ps1
+      - name: 窗口操作与成品验证
+        shell: pwsh
+        run: |
+          .venv/Scripts/python.exe tests/gui_smoke.py
+          if ($LASTEXITCODE -ne 0) { throw '界面测试失败' }
+          .venv/Scripts/python.exe tests/package_smoke.py
+          if ($LASTEXITCODE -ne 0) { throw '成品验证失败' }
+      - name: 压缩与校验
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/ScnTermConfig -DestinationPath dist/ScnTermConfig-windows-x64.zip
+          $hash=(Get-FileHash dist/ScnTermConfig-windows-x64.zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  ScnTermConfig-windows-x64.zip" | Set-Content dist/SHA256SUMS -Encoding ascii
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ScnTermConfig-windows-x64
+          path: |
+            tools/scnterm-config/dist/ScnTermConfig-windows-x64.zip
+            tools/scnterm-config/dist/SHA256SUMS
+          retention-days: 7
+      - name: 更新发布包
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view scnterm-config --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create scnterm-config --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'ScnTerm 配置' --notes 'Windows 独立串口配置程序。下载 ZIP 后完整解压，运行 ScnTermConfig.exe。构建来源见包内 build-info.json。'
+            if ($LASTEXITCODE -ne 0) { throw '创建发布失败' }
+          }
+          gh release upload scnterm-config dist/ScnTermConfig-windows-x64.zip dist/SHA256SUMS --clobber --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw '上传发布失败' }
+          gh api --method PATCH "repos/$env:GITHUB_REPOSITORY/git/refs/tags/scnterm-config" -f sha=$env:GITHUB_SHA -F force=true
+          if ($LASTEXITCODE -ne 0) { throw '更新发布标签失败' }

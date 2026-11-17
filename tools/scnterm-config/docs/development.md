@@ -73,3 +73,9 @@
 工具源码由 `scnabla/scnterm-config` 的 `07fdaf31cc2784b94cd60cb90cb62dedaa2a14fc` 导入 `personal-config/tools/scnterm-config/`。运行代码、测试、示例及许可证保留，工作流位于配置仓库根目录的 `.github/workflows/scnterm-config.yml`。
 
 构建命令使用工具子目录作为工作目录，上传产物使用仓库根目录下的完整相对路径。发布标签为 `scnterm-config`，构建信息包含配置仓库提交号、工具所在目录和运行地址。
+
+迁移后的源码提交为 `cabab6bb4c41b8b9849d8c890428f12a12ba1ed7`，线上构建 [44114832645](https://github.com/scnabla/personal-config/actions/runs/44114832645) 通过。43 项自动测试在 Linux 与 Windows 通过，Windows 窗口操作与成品检查通过；下载 ZIP 校验值和包内 1051 个清单文件的 SHA256 一致。原仓库已停用自动构建与发布，首页指向新目录，历史源码与发布保留。
+
+## 表单编辑与保存
+
+串口、日志与高亮表单不提供单独的应用按钮。切换连接或规则时校验并保留当前输入；点击“预览并保存”时统一收集各表单，确认差异后写入 `serial.lua`。输入有误时保留原表单并提示，文件保持不变。

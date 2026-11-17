@@ -57,11 +57,10 @@ class Editor(ttk.Frame):
               'logging':'目录留空时保存在主 Lua 旁边；相对路径也以主 Lua 所在目录为准。设置用于下一次开始记录。',
               'rules':'只改变匹配文字的颜色。靠前的规则优先；正则按原样填写，无需增加 Lua 引号或反斜杠。'}[section]
         ttk.Label(self.form,text=hint,wraplength=540,foreground='#526078').grid(row=r,column=0,columnspan=3,sticky='w',pady=12)
-        self.apply_button=ttk.Button(self.form,text='应用到待保存修改',command=self.apply);self.apply_button.grid(row=r+1,column=1,sticky='e',pady=8)
         if section=='rules':
             self.case=ttk.Combobox(self.form,values=list(BOOL),state='readonly');self.case.set(DEFAULT)
-            ttk.Label(self.form,text='公共区分大小写').grid(row=r+2,column=0,sticky='w',pady=10)
-            self.case.grid(row=r+2,column=1,sticky='ew');self.case.bind('<<ComboboxSelected>>',self.change_case)
+            ttk.Label(self.form,text='公共区分大小写').grid(row=r+1,column=0,sticky='w',pady=10)
+            self.case.grid(row=r+1,column=1,sticky='ew');self.case.bind('<<ComboboxSelected>>',self.change_case)
 
     def rows(self):return self.app.session.model[self.section] if self.app.session else []
     def writable(self):return self.app.session and (self.section in self.app.session.document.sections or self.section in self.app.session.document.creatable)
@@ -107,7 +106,6 @@ class Editor(ttk.Frame):
         for key in self.widgets:
             value=self.current.get(key) if self.current is not None else None
             self.put(key,value,self.current is None or isinstance(value,Dynamic) or not self.writable())
-        self.apply_button.configure(state='normal' if self.current is not None and self.writable() else 'disabled')
         if self.current is not None and any(isinstance(v,Dynamic) for v in self.current.values()):self.notice.configure(text='由代码计算的字段只读，其余字段可以修改。')
 
     def read_widget(self,key):
@@ -140,10 +138,6 @@ class Editor(ttk.Frame):
         self.current=trial[self.section] if self.section=='logging' else trial[self.section][self.index]
         self.original_display={k:self.read_widget(k) for k in self.widgets}
         self.app.update_status()
-
-    def apply(self):
-        try:self.flush();self.refresh(self.index or 0)
-        except (ConfigError,OSError,ValueError) as e:self.app.error(e)
 
     def select(self,event=None):
         selected=self.listbox.curselection()

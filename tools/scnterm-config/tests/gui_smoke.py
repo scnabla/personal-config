@@ -42,12 +42,18 @@ try:
     app.open_directory(folder);app.update()
     assert not errors,errors
     ports,logging,rules=app.editors
-    set_field(ports,'baud','921600');ports.apply();app.update()
-    ports.add();set_field(ports,'name','第二设备');set_field(ports,'port','COM9');ports.apply()
-    set_field(logging,'max_file_size_mb','25');set_field(logging,'directory','logs');logging.apply()
-    rules.add();set_field(rules,'keywords','测试错误\n失败');set_field(rules,'patterns',r'\berror\b');rules.apply()
+    set_field(ports,'baud','921600')
+    ports.add();set_field(ports,'name','第二设备');set_field(ports,'port','COM9')
+    ports.listbox.selection_clear(0,'end');ports.listbox.selection_set(0)
+    ports.listbox.event_generate('<<ListboxSelect>>');app.update()
+    assert app.session.model['ports'][1]['name']=='第二设备'
+    set_field(logging,'max_file_size_mb','25');set_field(logging,'directory','logs')
+    rules.add();set_field(rules,'keywords','测试错误\n失败');set_field(rules,'patterns',r'\berror\b')
     assert not errors,errors
-    app.preview_save();app.update();click('确认保存')
+    assert (folder/'serial.lua').read_bytes()==original
+    click('预览并保存')
+    assert (folder/'serial.lua').read_bytes()==original
+    click('确认保存')
     assert not errors,errors
     doc=LuaDocument((folder/'serial.lua').read_bytes())
     assert doc.model['ports'][0]['baud']==921600 and len(doc.model['ports'])==2
@@ -64,9 +70,13 @@ try:
         capture(app,work/'window.bmp')
     result['window']={'title':app.title(),'width':app.winfo_width(),'height':app.winfo_height(),'tabs':[app.tabs.tab(i,'text') for i in range(4)]}
     before=(folder/'serial.lua').read_bytes()
-    set_field(ports,'baud','bad');ports.apply();assert errors;errors.clear()
+    set_field(ports,'baud','bad');click('预览并保存');assert errors;errors.clear()
+    ports.listbox.selection_clear(0,'end');ports.listbox.selection_set(1)
+    ports.listbox.event_generate('<<ListboxSelect>>');app.update()
+    assert errors and ports.index==0 and ports.listbox.curselection()==(0,)
+    assert ports.widgets['baud'].get()=='bad';errors.clear()
     assert (folder/'serial.lua').read_bytes()==before
-    set_field(ports,'baud','921600');ports.apply()
+    set_field(ports,'baud','921600')
     app.restore_dialog();app.update();click('预览恢复内容');click('确认保存')
     assert not errors,errors
     assert (folder/'serial.lua').read_bytes()==original
@@ -76,12 +86,12 @@ try:
     assert not errors,errors
     assert not LuaDocument((folder/'serial.lua').read_bytes()).model['ports']
     # 外部改动后，确认保存必须失败。
-    ports.add();ports.apply()
+    ports.add()
     app.preview_save();app.update()
     external=(folder/'serial.lua').read_bytes()+b'\n-- external edit\n';(folder/'serial.lua').write_bytes(external)
     click('确认保存');assert errors and '其他程序修改' in errors[-1];errors.clear()
     assert (folder/'serial.lua').read_bytes()==external
-    result.update(passed=True,checks=['Windows Tk window','connection add edit delete','logging fields','highlight keywords and regex','diff confirmation','backup restore','invalid input','read-only files','external edit protection'])
+    result.update(passed=True,checks=['Windows Tk window','connection add edit delete','collect input on selection and save','write only after confirmation','logging fields','highlight keywords and regex','diff confirmation','backup restore','invalid input','read-only files','external edit protection'])
 except Exception as e:
     result.update(passed=False,error=repr(e),errors=errors)
     raise

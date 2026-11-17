@@ -211,7 +211,7 @@ class Application(tk.Tk):
         self.tabs=ttk.Notebook(self);self.tabs.pack(fill='both',expand=True,padx=18,pady=(0,12))
         for section,kind,label in [('ports','ports','串口连接'),('logging','logging','日志'),('rules','rule','高亮规则')]:
             editor=Editor(self,self.tabs,section,kind);self.editors.append(editor);self.tabs.add(editor,text=label)
-        for kind,label in [('ssh','SSH · ssh.lua'),('keys','快捷键 · keys.lua')]:
+        for kind,label in [('ssh','SSH'),('keys','快捷键')]:
             editor=ModuleEditor(self,self.tabs,kind);self.module_editors[kind]=editor;self.tabs.add(editor,text=label)
         readonly=ttk.Frame(self.tabs,padding=16);self.tabs.add(readonly,text='其他配置 · 只读')
         self.file_choice=ttk.Combobox(readonly,state='readonly');self.file_choice.pack(fill='x',pady=(0,10));self.file_choice.bind('<<ComboboxSelected>>',lambda e:self.show_readonly())

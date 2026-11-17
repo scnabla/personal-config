@@ -148,7 +148,7 @@ class StorageTests(unittest.TestCase):
         with self.assertRaises(ConfigError):self.session.save(data)
         self.assertTrue(self.path.read_bytes().endswith(b'-- external\n'))
     def test_readonly_filename(self):
-        p=self.path.with_name('ssh.lua');p.write_bytes(SAMPLE)
+        p=self.path.with_name('wezterm.lua');p.write_bytes(SAMPLE)
         with self.assertRaises(ConfigError):ConfigSession(p)
     def test_preview_must_match(self):
         data=self.changed();self.session.model['ports'][0]['baud']=9600

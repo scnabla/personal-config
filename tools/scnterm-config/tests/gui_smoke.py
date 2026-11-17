@@ -68,7 +68,7 @@ try:
     if sys.platform=='win32':
         from window_capture import capture
         capture(app,work/'window.bmp')
-    result['window']={'title':app.title(),'width':app.winfo_width(),'height':app.winfo_height(),'tabs':[app.tabs.tab(i,'text') for i in range(4)]}
+    result['window']={'title':app.title(),'width':app.winfo_width(),'height':app.winfo_height(),'tabs':[app.tabs.tab(i,'text') for i in range(len(app.tabs.tabs()))]}
     before=(folder/'serial.lua').read_bytes()
     set_field(ports,'baud','bad');click('预览并保存');assert errors;errors.clear()
     ports.listbox.selection_clear(0,'end');ports.listbox.selection_set(1)

@@ -40,6 +40,8 @@ jobs:
         run: |
           .venv/Scripts/python.exe tests/gui_smoke.py
           if ($LASTEXITCODE -ne 0) { throw '界面测试失败' }
+          .venv/Scripts/python.exe tests/gui_editors.py
+          if ($LASTEXITCODE -ne 0) { throw '多文件配置界面测试失败' }
           .venv/Scripts/python.exe tests/package_smoke.py
           if ($LASTEXITCODE -ne 0) { throw '成品验证失败' }
       - name: 压缩与校验
@@ -62,10 +64,12 @@ jobs:
         run: |
           gh release view scnterm-config --repo $env:GITHUB_REPOSITORY *> $null
           if ($LASTEXITCODE -ne 0) {
-            gh release create scnterm-config --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'ScnTerm 配置' --notes 'Windows 独立串口配置程序。下载 ZIP 后完整解压，运行 ScnTermConfig.exe。构建来源见包内 build-info.json。'
+            gh release create scnterm-config --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'ScnTerm 配置' --notes 'Windows 独立 Lua 配置程序，支持串口、SSH 服务器与快捷键。下载 ZIP 后完整解压，运行 ScnTermConfig.exe。构建来源见包内 build-info.json。'
             if ($LASTEXITCODE -ne 0) { throw '创建发布失败' }
           }
           gh release upload scnterm-config dist/ScnTermConfig-windows-x64.zip dist/SHA256SUMS --clobber --repo $env:GITHUB_REPOSITORY
           if ($LASTEXITCODE -ne 0) { throw '上传发布失败' }
           gh api --method PATCH "repos/$env:GITHUB_REPOSITORY/git/refs/tags/scnterm-config" -f sha=$env:GITHUB_SHA -F force=true
           if ($LASTEXITCODE -ne 0) { throw '更新发布标签失败' }
+          gh release edit scnterm-config --repo $env:GITHUB_REPOSITORY --notes 'Windows 独立 Lua 配置程序，支持串口、SSH 服务器与快捷键。下载 ZIP 后完整解压，运行 ScnTermConfig.exe。构建来源见包内 build-info.json。'
+          if ($LASTEXITCODE -ne 0) { throw '更新发布说明失败' }
